@@ -5,9 +5,9 @@ but may fail if they have been installed in non-standard locations.
 If a required library is not found, the local copy will be compiled.
 
 The following libraries have been found:
-  BLAS_LIBS= -lmkl_em64t  
-  LAPACK_LIBS=  -lmkl_em64t  
-  FFT_LIBS=
+  BLAS_LIBS=../flib/blas.a
+  LAPACK_LIBS=../flib/lapack.a
+  FFT_LIBS= -lfftw 
   @delete@
   @delete@
 Please check if this is what you expect.

@@ -31,14 +31,14 @@
 # With the exception of IBM xlf, FDFLAGS = $(DFLAGS)
 # For IBM xlf, FDFLAGS is the same as DFLAGS with separating commas 
 
-DFLAGS         =  -D__INTEL -D__FFTW -D__USE_INTERNAL_FFTW -D__MPI -D__PARA
+DFLAGS         =  -D__INTEL -D__FFTW -D__MPI -D__PARA
 FDFLAGS        = $(DFLAGS)
 
 # IFLAGS = how to locate directories where files to be included are
 # In most cases, IFLAGS = -I../include
 # If loading an external FFTW library, add the location of FFTW include files
 
-IFLAGS         = -I../include 
+IFLAGS         = -I../include  
 
 # MODFLAGS = flag used by f90 compiler to locate modules
 # You need to search for modules in ./, in ../iotk/src, in ../Modules
@@ -58,7 +58,7 @@ MODFLAGS       = -I./  -I../Modules  -I../iotk/src \
 
 MPIF90         = mpif90
 #F90           = ifort
-CC             = icc
+CC             = cc
 F77            = ifort
 
 # C preprocessor and preprocessing flags - for explicit preprocessing, 
@@ -85,14 +85,14 @@ FFLAGS_NOOPT   = -O0 -assume byterecl
 # Typically LD coincides with F90 or MPIF90, LD_LIBS is empty
 
 LD             = mpif90
-LDFLAGS        = -i-static -openmp 
+LDFLAGS        = 
 LD_LIBS        =
 
 # External Libraries (if any) : blas, lapack, fft, MPI
 
 # If you have nothing better, use the local copy : ../flib/blas.a
 
-BLAS_LIBS      =  -lmkl_em64t  
+BLAS_LIBS      = ../flib/blas.a
 
 # The following lapack libraries will be available in flib/ :
 # ../flib/lapack.a : contains all needed routines
@@ -100,12 +100,12 @@ BLAS_LIBS      =  -lmkl_em64t
 # For IBM machines with essl (-D__ESSL): load essl BEFORE lapack !
 # remember that LAPACK_LIBS precedes BLAS_LIBS in loading order
 
-LAPACK_LIBS    =   -lmkl_em64t  
+LAPACK_LIBS    = ../flib/lapack.a
 
 # nothing needed here if the the internal copy of FFTW is compiled
 # (needs -D__FFTW -D__USE_INTERNAL_FFTW in DFLAGS)
 
-FFT_LIBS       = 
+FFT_LIBS       =  -lfftw 
 
 # For parallel execution, the correct path to MPI libraries must
 # be specified in MPI_LIBS (except for IBM if you use mpxlf)

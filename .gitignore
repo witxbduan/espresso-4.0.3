@@ -4,4 +4,6 @@ config.*
 *.a
 *.x
 *.prog
-
+/bin
+make.sys
+configure.msg

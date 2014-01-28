@@ -7,6 +7,7 @@
 */
 
 #include "c_defs.h"
+#include <malloc.h>
 
 /* 
   This function return the numer of kilobytes allocated
@@ -17,7 +18,7 @@
 void F77_FUNC(memstat,MEMSTAT)(int *kilobytes)
 {
 #if defined(HAVE_MALLINFO) && !defined(__QK_USER__) && !defined(__SOLARIS) 
-#include <malloc.h>
+//#include <malloc.h>
   struct mallinfo info;  
   info = mallinfo();
 
