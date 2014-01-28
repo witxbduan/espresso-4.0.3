@@ -1,0 +1,7 @@
+*.o
+config.*
+*.mod
+*.a
+*.x
+*.prog
+
