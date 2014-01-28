@@ -106,6 +106,9 @@ ph :
 wannier :
 	cd ../../W90 ; make libs
 
+tetra : 
+	mpif90 -O2 -assume byterecl -nomodule -fpp -D__INTEL -D__FFTW -D__MPI -D__PARA -I../../include   -I./ -I../../Modules -I../../iotk/src -I../../PW -I../../PH -I../../PP -c selfen_elec_tetra.f90
+
 clean :
 	- /bin/rm -f  *.o *~ *.F90 *.d *.mod *.i 
 
