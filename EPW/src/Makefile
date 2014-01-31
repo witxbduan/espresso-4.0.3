@@ -73,6 +73,8 @@ rotate_eigenm.o \
 rotate_epmat.o \
 rwepmatw.o \
 selfen_elec.o \
+selfen_elec_tetra.o \
+selfen_elec_bo.o \
 selfen_phon.o \
 set_ndnmbr.o \
 setphases.o \

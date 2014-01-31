@@ -1,4 +1,4 @@
-1;2305;0c--
+--
 &inputepw
   prefix      = 'pb',
   amass(1)    = 207.2
@@ -29,10 +29,10 @@
   tshuffle2   = .true.
   tphases     = .false.
 
-  elecselfen  = .false.
-  phonselfen  = .true.
-  fly         = .true.
-  a2f         = .true.
+  elecselfen  = .true.
+  phonselfen  = .false.
+  fly         = .false.
+  a2f         = .false.
 
   parallel_k  = .true.
   parallel_q  = .false.

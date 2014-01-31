@@ -9,7 +9,7 @@
   epbwrite    = .true.
   epbread     = .false.
 
-  epwwrite    = .true.
+  epwwrite    = .false.
   epwread     = .false.
 
   epf_mem     = .true.
@@ -31,8 +31,8 @@
   tshuffle2   = .true.
   tphases     = .false.
 
-  elecselfen  = .false.
-  phonselfen  = .false.
+  elecselfen  = .true.
+  phonselfen  = .true.
 
   parallel_k  = .true.
   parallel_q  = .false.

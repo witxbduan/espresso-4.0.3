@@ -142,7 +142,7 @@ if [ "$phons" == "1" ]; then
     $PH_COMMAND  < ph.in   > ../ph.out
 #    check_failure $?
     $ECHO " Copying dvscf and dyn for q_${Q}"
-    cp pb.dvscf ../../../save/pb.dvscf_q${Q}
+    cp pb.dvscf1 ../../../save/pb.dvscf_q${Q}
     cp pb.dyn ../../../save/pb.dyn_q${Q}
     $ECHO " Cleaning up after calculation"
     cd ../

@@ -7,3 +7,4 @@ config.*
 /bin
 make.sys
 configure.msg
+EPW/examples/

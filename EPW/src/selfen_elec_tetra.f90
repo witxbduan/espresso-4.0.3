@@ -18,6 +18,7 @@
   !  from ep-wannier interpolation
   !
   !
+  !  Modified version of electron self energy calc to use tetrahedron integration
   !-----------------------------------------------------------------------
 #include "f_defs.h"
   USE kinds, ONLY : DP
@@ -96,7 +97,7 @@
      ENDIF
   ENDIF
   !
-  !
+  !Number of tetrahedra for fine mesh
   ntetraf=6*nqf1*nqf2*nqf3
   ALLOCATE ( tetraf  ( 4,  ntetraf))
   !defined kpoint_grid ( nrot, time_reversal, s, t_rev, bg, npk, &
@@ -338,4 +339,5 @@
   !
   RETURN
   !
+  IF ( ALLOCATED  (tetraf)  ) DEALLOCATE (tetraf)
   END SUBROUTINE selfen_elec_tetra
