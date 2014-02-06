@@ -32,7 +32,8 @@
   tphases     = .false.
 
   elecselfen  = .true.
-  phonselfen  = .true.
+  phonselfen  = .false.
+  fly	      = .true.
 
   parallel_k  = .true.
   parallel_q  = .false.

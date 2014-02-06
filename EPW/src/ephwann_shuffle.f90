@@ -34,7 +34,7 @@
                             iuetf, lretf, epwread, epwwrite,       &
                             iunepmatwp, iunepmatwe, ngaussw, degaussw, &
                             nbndskip, parallel_k, parallel_q, epf_mem, etf_mem, &
-                            phonselfen, nest_fn, fly, a2f, indabs, &
+                            phonselfen, elecselfen, nest_fn, fly, a2f, indabs, &
                             epexst, wepexst, vme, eig_read, emaxabs, &
                             eminabs, nsmear, delta_smear, twophoton, ephmatwrite
   USE control_flags, ONLY : iverbosity
@@ -543,6 +543,7 @@
      ENDDO  ! end loop over k points
      !
      IF (phonselfen  .and. fly) CALL selfen_phon_fly( iq )
+     !added by schuberm
      IF (elecselfen  .and. fly) CALL selfen_elec_fly( iq )
      IF (nest_fn     .and. fly) CALL nesting_fn_fly( iq )
 !     IF (indabs      .and. fly) CALL indabs_fly (iq)

@@ -7,6 +7,7 @@ include make.libs
 # use recursive definitions in Makefile to modify the PATH for modules
 #
 
+DBGFLAGS   = -g
 IFLAGS   = -I../../include  
 MODFLAGS = -I./ -I../../Modules -I../../iotk/src \
            -I../../PW -I../../PH -I../../PP
@@ -96,7 +97,7 @@ all : epw
 
 epw : pw ph wannier $(EPWOBJS) $(LIBOBJS)
 	$(LD) -o epw.x $(MODULES) $(PWOBJS) $(PHOBJS) \
-	$(EPWOBJS) $(W90LIB) $(LDFLAGS) $(LIBOBJS) $(LIBS)
+	$(EPWOBJS) $(W90LIB) $(LDFLAGS) $(DBGFLAGS) $(LIBOBJS) $(LIBS)
 	- ( cd ../bin ; ln -fs ../src/epw.x . )
 
 pw : 
@@ -108,6 +109,7 @@ ph :
 wannier :
 	cd ../../W90 ; make libs
 
+#added by schuberm
 tetra : 
 	mpif90 -O2 -assume byterecl -nomodule -fpp -D__INTEL -D__FFTW -D__MPI -D__PARA -I../../include   -I./ -I../../Modules -I../../iotk/src -I../../PW -I../../PH -I../../PP -c selfen_elec_tetra.f90
 

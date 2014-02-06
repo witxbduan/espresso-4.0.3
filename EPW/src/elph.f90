@@ -36,7 +36,7 @@
   REAL(KIND=DP), ALLOCATABLE ::&
        xk_all(:,:),            &!  full k point grid, coarse (3, nkstot)
        et_all(:,:),            &!  full eigenvalue list, coarse (nbnd, nkstot)
-       et_ks(:,:),            &!  lda eigenvalues
+       et_ks(:,:),             &!  lda eigenvalues
        et_mb(:,:),             &!  gw eigenvalues
        xkq(:,:),               &!  local k+q grid, coarse (3, nks)
        etq(:,:),               &!  eigenvalues of k+q wavefunctions
@@ -49,9 +49,12 @@
        wf(:,:),                &!  interpolated eigenfrequencies 
        wslen(:),               &!  length of the wigner seitz points in units of alat
        etfq(:,:,:),            &!  energies
-       lambda_all(:,:,:),      &
-       lambda_v_all(:,:,:),    &
-       jdos(:),                &
+       lambda_all(:,:,:),      &!  added by bo
+       lambda_v_all(:,:,:),    &!  added by bo
+       sigmar_all(:,:),        &!  To store sigma_r, sigma_i and zi globally
+       sigmai_all(:,:),        &!  added by bo
+       zi_all(:,:),            &!  added by bo
+       jdos(:),                &!  added by bo
        spectra(:,:,:,:,:,:)     !  dipole absorption spectra, polarizations, nomega, nsmear, dme/vme, absorption/emission
   INTEGER :: &
        nksf,                   &!  number of k points in the pool (fine grid)
