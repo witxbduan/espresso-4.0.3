@@ -77,6 +77,7 @@ selfen_elec.o \
 selfen_elec_tet.o \
 selfen_elec_tet_fly.o \
 selfen_phon.o \
+selfen_phon_tet.o \
 set_ndnmbr.o \
 setphases.o \
 setphases_wrap.o \

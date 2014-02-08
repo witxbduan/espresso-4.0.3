@@ -29,9 +29,9 @@
   tshuffle2   = .true.
   tphases     = .false.
 
-  elecselfen  = .true.
-  phonselfen  = .false.
-  fly         = .true.
+  elecselfen  = .false.
+  phonselfen  = .true.
+  fly         = .false.
   a2f         = .false.
 
   parallel_k  = .true.

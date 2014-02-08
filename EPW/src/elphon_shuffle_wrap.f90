@@ -530,7 +530,7 @@ goto 123
   ! 
   !added by schuberm
   IF (elecselfen  .and. .not.fly) CALL selfen_elec_tet
-  IF (phonselfen  .and. .not.fly) CALL selfen_phon
+  IF (phonselfen  .and. .not.fly) CALL selfen_phon_tet
   IF (nest_fn     .and. .not.fly) CALL nesting_fn
   IF (band_plot   .and. .not.fly) CALL plot_band
   !

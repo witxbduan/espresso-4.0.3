@@ -6,7 +6,7 @@
   ! present distribution, or http://www.gnu.org/copyleft.gpl.txt .             
   !                                                                            
   !-----------------------------------------------------------------------
-  subroutine selfen_phon
+  subroutine selfen_phon_tet
   !-----------------------------------------------------------------------
   !
   !  compute the imaginary part of the phonon self energy due to electron-
@@ -26,12 +26,22 @@
   USE epwcom,    ONLY : nbndsub, lrepmatf, iunepmatf, fsthick, &
                         eptemp, ngaussw, degaussw, iuetf,     &
                         wmin, wmax, nw, nbndskip, a2f, epf_mem, etf_mem, &
-                        nsmear, delta_smear, eig_read, eps_acustic
+                        nsmear, delta_smear, eig_read, eps_acustic,  &
+                        nqf1, nqf2, nqf3, nkf1, nkf2, nkf3 !! extra from schuberm 
   USE pwcom,     ONLY : nelec, ef, isk, nbnd
   USE el_phon,   ONLY : epf17, ibndmax, ibndmin, etf, &
                         etfq, wkf, xqf, wqf, nksf, nxqf,   &
                         nksqf, wf, nkstotf, xkf, xqf, dmef, &
                         lambda_all, lambda_v_all
+
+  !Modules added for tetrahedra-related subroutines
+  USE wvfct,              ONLY : nbnd, wg, et
+  USE lsda_mod,           ONLY : nspin, isk
+  USE klist,              ONLY : xk, wk, nks
+  use phcom
+  USE ktetra,             ONLY : k1, k2, k3
+  USE symme,              ONLY : s, t_rev, irt, ftau, nsym, invsym, d1,d2,d3, &
+                                 time_reversal
 #ifdef __PARA
   USE mp,        ONLY : mp_barrier,mp_sum
   USE mp_global, ONLY : me_pool,inter_pool_comm,my_pool_id
@@ -54,6 +64,11 @@
   real(kind=DP) :: coskkq(nbndsub, nbndsub)
   real(kind=DP) :: DDOT,  vkk(3,nbndsub), vkq(3,nbndsub)
   !
+  !Variables added for tetrahedra-related subroutines
+  integer :: is
+  real(DP):: wgf (nbnd, nksf), eff
+  integer :: ntetraf
+  integer, allocatable ::tetraf(:,:)
   !
   !
   WRITE(6,'(/5x,a)') repeat('=',67)
@@ -95,7 +110,28 @@
      !
      !   Note that the weights of k+q points must be set to zero here
      !   no spin-polarized calculation here
-     ef0 = efermig(etf,nbndsub,nksf,nelec,wkf,degaussw0,ngaussw,0,isk)
+    ef0 = efermig(etf,nbndsub,nksf,nelec,wkf,degaussw0,ngaussw,0,isk)
+    !Number of tetrahedra for fine mesh
+    ntetraf=6*nkf1*nkf2*nkf3
+    ALLOCATE ( tetraf  ( 4,  ntetraf))
+    !defined kpoint_grid ( nrot, time_reversal, s, t_rev, bg, npk, &
+    !                       k1,k2,k3, nk1,nk2,nk3, nks, xk, wk)
+    call kpoint_grid ( nsym, time_reversal, s, t_rev, bg, npk, &
+                           k1,k2,k3, nkf1,nkf2,nkf3, nksf, xk, wk)
+
+    !defined tetrahedra ( nsym, s, minus_q, at, bg, npk, k1,k2,k3, &
+    !   nk1,nk2,nk3, nks, xk, wk, ntetra, tetra )
+    call tetrahedra ( nsym, s, minus_q, at, bg, npk, k1,k2,k3, &
+       nkf1,nkf2,nkf3, nksf, xk, wkf, ntetraf, tetraf )
+
+    ! Calculate the Fermi energy ef
+    eff = efermit (etf, nbnd, nksf, nelec, nspin, ntetra, tetra, is, isk)
+
+    !defined tweights (nks, nspin, nbnd, nelec, ntetra, tetra, et, &
+    !   ef, wg, is, isk )
+    call tweights (nksf, nspin, nbndsub, nelec, ntetraf, tetraf, etf, &
+       eff, wgf, is, isk )
+
      !
      !   if 'fine' Fermi level differs by more than 250 meV, there is probably
      !   something wrong with the wannier functions
@@ -111,7 +147,163 @@
      !
      ! loop over all q points of the fine mesh (this is in the k-para case 
      ! it should always be k-para for selfen_phon)
-     ! 
+     DO iq = 1, nxqf
+        !
+        CALL start_clock('PH SELF-ENERGY')
+        !
+        fermicount = 0
+        gamma = zero
+        gamma_v = zero
+        !
+        DO ik = 1, nksqf
+           !
+           ikk = 2 * ik - 1
+           ikq = ikk + 1
+           !
+           coskkq = 0.d0
+           DO ibnd = 1, nbndsub
+              DO jbnd = 1, nbndsub
+                 ! v_(k,i) = 1/m <ki|p|ki> = 2 * dmef (:, i,i,k)
+                 ! 1/m  = 2 in Rydberg atomic units
+                 vkk(:, ibnd ) = 2.0 * REAL (dmef (:, ibnd, ibnd, ikk ) )
+                 vkq(:, jbnd ) = 2.0 * REAL (dmef (:, jbnd, jbnd, ikq ) )
+                 IF ( abs ( DDOT(3,vkk(:,ibnd), 1, vkk(:,ibnd), 1) ) .gt. 1.d-4 ) &
+                    coskkq(ibnd, jbnd ) = DDOT(3, vkk(:,ibnd ), 1, vkq(:,jbnd),1) / &
+                                          DDOT(3, vkk(:,ibnd), 1, vkk(:,ibnd),1)
+              ENDDO
+           ENDDO
+           !
+           ! we read the hamiltonian eigenvalues (those at k+q depend on q!) 
+           !
+           IF (etf_mem) then
+              etf (ibndmin:ibndmax, ikk) = etfq (ibndmin:ibndmax, ikk, iq)
+              etf (ibndmin:ibndmax, ikq) = etfq (ibndmin:ibndmax, ikq, iq)
+           ELSE
+              nrec = (iq-1) * nksf + ikk
+              CALL davcio ( etf (ibndmin:ibndmax, ikk), ibndmax-ibndmin+1, iuetf, nrec, - 1)
+              nrec = (iq-1) * nksf + ikq
+              CALL davcio ( etf (ibndmin:ibndmax, ikq), ibndmax-ibndmin+1, iuetf, nrec, - 1)
+           ENDIF
+           !
+           ! here we must have ef, not ef0, to be consistent with ephwann_shuffle
+           IF ( ( minval ( abs(etf (:, ikk) - ef) ) .lt. fsthick ) .and. &
+                ( minval ( abs(etf (:, ikq) - ef) ) .lt. fsthick ) ) then
+              !
+              fermicount = fermicount + 1
+              !
+              DO imode = 1, nmodes
+                 !
+                 ! the phonon frequency
+                 wq = wf (imode, iq)
+                 !
+                 !  we read the e-p matrix from disk / memory
+                 !
+                 IF (etf_mem) then
+                    epf(:,:) = epf17 ( ik, iq, :, :, imode)
+                 ELSE
+                    nrec = (iq-1) * nmodes * nksqf + (imode-1) * nksqf + ik
+                    CALL dasmio ( epf, ibndmax-ibndmin+1, lrepmatf, iunepmatf, nrec, -1)
+                 ENDIF
+                 !
+                 DO ibnd = 1, ibndmax-ibndmin+1
+                    !
+                    !  the fermi occupation for k
+                    ekk = etf (ibndmin-1+ibnd, ikk) - ef0
+                    wgkk = wgauss( -ekk/eptemp0, -99)
+                    !
+                    DO jbnd = 1, ibndmax-ibndmin+1
+                       !
+                       !  the fermi occupation for k+q
+                       ekq = etf (ibndmin-1+jbnd, ikq) - ef0
+                       wgkq = wgauss( -ekq/eptemp0, -99)  
+                       !
+                       ! here we take into account the zero-point sqrt(hbar/2M\omega)
+                       ! with hbar = 1 and M already contained in the eigenmodes
+                       ! g2 is Ry^2, wkf must already account for the spin factor
+                       !
+                       ! NON FUNZIONA SCAMBIANDO i,j
+                       ! the coupling from Gamma acoustic phonons is negligible
+                       IF ( wq .gt. eps_acustic ) THEN
+                          g2 = abs(epf (jbnd, ibnd))**two / ( two * wq )
+                       ELSE
+                          g2 = 0.d0
+                       ENDIF
+                       !
+                       ! = k-point weight * [f(E_k) - f(E_k+q)]/ [E_k+q - E_k -w_q +id]
+                       ! This is the imaginary part of the phonon self-energy, sans the matrix elements
+                       !
+                       !weight = wkf (ikk) * (wgkk - wgkq) * &
+                       !   aimag ( cone / ( ekq - ekk - wq - ci * degaussw0 ) ) 
+                       !
+                       ! the below expression is positive-definite, but also an approximation
+                       ! which neglects some fine features
+                       !
+                       w0g1 = w0gauss ( ekk / degaussw0, 0) / degaussw0
+                       w0g2 = w0gauss ( ekq / degaussw0, 0) / degaussw0
+                       weight = pi * wq * wkf (ikk) * w0g1 * w0g2
+                       !
+                       !gamma(imode) =   gamma   (imode) + weight * g2 
+                       !gamma_v(imode) = gamma_v (imode) + weight * g2 * (1-coskkq(ibnd, jbnd) ) 
+                       gamma(imode) =   gamma   (imode) + wgf(ibnd,ikk) * g2 
+                       gamma_v(imode) = gamma_v (imode) + weight * g2 * (1-coskkq(ibnd, jbnd) ) 
+                       !
+                    ENDDO ! jbnd
+                 ENDDO   ! ibnd
+                 !
+              ENDDO ! loop on q-modes
+              !
+              !
+           ENDIF ! endif fsthick
+           !
+           CALL stop_clock('PH SELF-ENERGY')
+           !
+        ENDDO ! loop on k        !
+#ifdef __PARA
+        !
+        ! collect contributions from all pools (sum over k-points)
+        ! this finishes the integral over the BZ  (k)
+        !
+        CALL mp_sum(gamma,inter_pool_comm) 
+        CALL mp_sum(gamma_v,inter_pool_comm) 
+        CALL mp_sum(fermicount, inter_pool_comm)
+        !
+#endif
+        !
+        WRITE(6,'(/5x,"iq = ",i5," coord.: ", 3f9.5, " wt: ", f9.5)') iq, xqf(:,iq) , wqf(iq)
+        WRITE(6,'(5x,a)') repeat('-',67)
+        lambda_tot = zero
+        DO imode = 1, nmodes
+           ! 
+           wq = wf (imode, iq)
+           lambda = zero
+           lambda_v = zero
+           IF ( sqrt(abs(wq)) .gt. eps_acustic ) lambda   = gamma(imode) / pi / wq**two / dosef
+           IF ( sqrt(abs(wq)) .gt. eps_acustic ) lambda_v = gamma_v(imode) / pi / wq**two / dosef
+           lambda_tot = lambda_tot + lambda
+           !
+           gamma_all( imode, iq, ismear ) = gamma(imode)
+           gamma_all_v( imode, iq, ismear ) = gamma_v(imode) / pi / wq**two / dosef
+           lambda_all( imode, iq, ismear ) = lambda
+           lambda_v_all( imode, iq, ismear ) = lambda_v
+           !
+           WRITE(6, 102) imode, lambda, ryd2mev * gamma(imode), ryd2mev * wq
+  call flush(6)
+        ENDDO
+        !
+        WRITE(6,103) lambda_tot
+        WRITE(6,'(5x,a/)') repeat('-',67)
+        !
+        ! test ONLY
+#ifdef __PARA
+!        if (me.eq.1) & 
+        IF (me_pool == 0) &
+#endif
+        !
+        !     
+        WRITE( stdout, '(/5x,a,i8,a,i8/)' ) &
+             'Number of (k,k+q) pairs on the Fermi surface: ',fermicount, ' out of ', nkstotf/2
+        !
+     ENDDO ! loop on q 
      DO iq = 1, nxqf
         !
         CALL start_clock('PH SELF-ENERGY')
@@ -278,10 +470,10 @@
 102 format(5x,'lambda( ',i3,' )=',f9.3,'   gamma=',f9.3,' meV','   omega=',f9.3,' meV')
 103 format(5x,'lambda( tot )=',f9.3)
   !
-  end subroutine selfen_phon
+  end subroutine selfen_phon_tet
   !
   !-----------------------------------------------------------------------
-  subroutine selfen_phon_fly (iq )
+  subroutine selfen_phon_fly_tet (iq )
   !-----------------------------------------------------------------------
   !
   !  compute the imaginary part of the phonon self energy due to electron-
@@ -549,6 +741,6 @@
 103 format(5x,'lambda( sum )=',f9.3)
   !
   return
-end subroutine selfen_phon_fly
+end subroutine selfen_phon_fly_tet
 !
 
