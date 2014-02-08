@@ -529,7 +529,7 @@ goto 123
   ! the calculation of the self energy
   ! 
   !added by schuberm
-  IF (elecselfen  .and. .not.fly) CALL selfen_elec_bo
+  IF (elecselfen  .and. .not.fly) CALL selfen_elec_tet
   IF (phonselfen  .and. .not.fly) CALL selfen_phon
   IF (nest_fn     .and. .not.fly) CALL nesting_fn
   IF (band_plot   .and. .not.fly) CALL plot_band

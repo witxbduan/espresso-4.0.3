@@ -7,7 +7,7 @@ include make.libs
 # use recursive definitions in Makefile to modify the PATH for modules
 #
 
-DBGFLAGS   = -g
+DBGFLAGS   = -g -traceback
 IFLAGS   = -I../../include  
 MODFLAGS = -I./ -I../../Modules -I../../iotk/src \
            -I../../PW -I../../PH -I../../PP
@@ -74,8 +74,8 @@ rotate_eigenm.o \
 rotate_epmat.o \
 rwepmatw.o \
 selfen_elec.o \
-selfen_elec_tetra.o \
-selfen_elec_bo.o \
+selfen_elec_tet.o \
+selfen_elec_tet_fly.o \
 selfen_phon.o \
 set_ndnmbr.o \
 setphases.o \
@@ -84,12 +84,13 @@ sort.o \
 spectral_func.o \
 star_q2.o \
 stop_epw.o \
+tetrahedron.o \
 vmebloch2wan.o \
 vmewan2bloch.o \
 wannierize.o \
 wigner_seitz2.o \
 wigner_seitz.o \
-write_ephmat.o 
+write_ephmat.o
 
 default : epw
 

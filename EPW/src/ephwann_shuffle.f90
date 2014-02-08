@@ -544,7 +544,7 @@
      !
      IF (phonselfen  .and. fly) CALL selfen_phon_fly( iq )
      !added by schuberm
-     IF (elecselfen  .and. fly) CALL selfen_elec_fly( iq )
+     IF (elecselfen  .and. fly) CALL selfen_elec_tet_fly( iq )
      IF (nest_fn     .and. fly) CALL nesting_fn_fly( iq )
 !     IF (indabs      .and. fly) CALL indabs_fly (iq)
 !     IF (twophoton   .and. fly) CALL twophoton_fly (iq)

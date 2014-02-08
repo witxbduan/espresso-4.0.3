@@ -53,6 +53,7 @@
        lambda_v_all(:,:,:),    &!  added by bo
        sigmar_all(:,:),        &!  To store sigma_r, sigma_i and zi globally
        sigmai_all(:,:),        &!  added by bo
+       sigmai_all_tet(:,:),    &!  added by schuberm
        zi_all(:,:),            &!  added by bo
        jdos(:),                &!  added by bo
        spectra(:,:,:,:,:,:)     !  dipole absorption spectra, polarizations, nomega, nsmear, dme/vme, absorption/emission

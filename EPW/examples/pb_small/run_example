@@ -24,18 +24,18 @@ $ECHO "3) Both"
 
 read opts
 
-if [ $opts -eq 1 ]; then
- phons="1"
- epw="0"
-fi
-if [ $opts  -eq 2 ]; then
+#if [ $opts -eq 1 ]; then
+# phons="1"
+# epw="0"
+#fi
+#if [ $opts  -eq 2 ]; then
  phons="0"
  epw="1"
-fi
-if [ $opts  -eq 3 ]; then
- phons="1"
- epw="1"
-fi
+#fi
+#if [ $opts  -eq 3 ]; then
+# phons="1"
+# epw="1"
+#fi
 # function to test the exit status of a job
 #@jn. ../check_failure.sh
 
