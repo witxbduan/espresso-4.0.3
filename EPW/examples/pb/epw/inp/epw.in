@@ -6,16 +6,18 @@
 
   elph        = .true.
   kmaps       = .false.
-  epbwrite    = .true.
-  epbread     = .false.
+  epbwrite    = .false.
+  epbread     = .true.
+  epwwrite    = .false.
+  epwread     = .true.
 
-  epf_mem     = .true.
-  etf_mem     = .true.
+  epf_mem     = .false.
+  etf_mem     = .false.
 
   nbndsub     =  4
   nbndskip    =  0
 
-  wannierize  = .true.
+  wannierize  = .false.
   num_iter    = 300
   dis_win_max = 18
   dis_froz_max= 8
@@ -32,7 +34,7 @@
   elecselfen  = .false.
   phonselfen  = .true.
   fly         = .false.
-  a2f         = .false.
+  a2f         = .true.
 
   parallel_k  = .true.
   parallel_q  = .false.

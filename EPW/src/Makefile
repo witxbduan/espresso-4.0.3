@@ -74,8 +74,6 @@ rotate_eigenm.o \
 rotate_epmat.o \
 rwepmatw.o \
 selfen_elec.o \
-selfen_elec_tet.o \
-selfen_elec_tet_fly.o \
 selfen_phon.o \
 selfen_phon_tet.o \
 set_ndnmbr.o \

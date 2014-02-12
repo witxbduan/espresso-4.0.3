@@ -232,7 +232,8 @@ DO ik = 1, nksqf
 					DO imode = 1, 2*nmodes
 						! Gamma(ikk, ibnd, imode) = Gamma(ikk, ibnd, imode) + Fqnu( iq, imode, ibnd, jbnd ) * tet_weight(imode) * 2 * pi
 						sigmai_chk(ibndmin-1+ibnd, ikk ) = sigmai_chk(ibndmin-1+ibnd, ikk ) + Fqnu( tet(itet)%p(jtet)%i, imode, ibnd, jbnd ) *tet(itet)%p(jtet)%c(imode) * pi
-					ENDDO ! imode
+					  WRITE(6,'(/5x," wt: ", f14.10)') tet(itet)%p(jtet)%c(imode)
+          ENDDO ! imode
 				ENDDO ! jtet
 			ENDDO ! itet
 		ENDDO ! ibnd

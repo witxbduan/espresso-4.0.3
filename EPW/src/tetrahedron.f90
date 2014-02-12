@@ -138,6 +138,28 @@ end subroutine eigen_tet
 	!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+subroutine eigen_tet_fermi(ntet,eival,tet,n,nkp)
+use tetrahedron
+USE kinds, ONLY : DP
+implicit none
+integer j,k,l,ntet, n,nkp,w,cnd
+real(DP), intent(in) :: eival(n,nkp)
+type(tetra), intent(inout) :: tet(ntet)
+
+do j=1,ntet !! this many tetra
+	do k=1,4   !! corners
+		do l=1,n   !! number of bands
+			w = tet(j)%p(k)%i  !! i is the index of k points in the original kmesh
+			tet(j)%p(k)%w(l)=eival(l,w) !! eigenvalues (band energies of band l, kpoint "w"
+		enddo
+	enddo
+enddo
+
+end subroutine eigen_tet_fermi
+
+	!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 subroutine weight_tet(nktot, ntet,nb,e,tet,wkt)
 !! input:  number of bands, the energy e that the weights are going to be computed, tet: tetrahedron

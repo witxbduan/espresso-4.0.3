@@ -6,7 +6,7 @@
   ! present distribution, or http://www.gnu.org/copyleft.gpl.txt .             
   !                                                                            
   !-----------------------------------------------------------------------
-  subroutine selfen_phon_tet
+  subroutine selfen_phon_tet_bo
   !-----------------------------------------------------------------------
   !
   !  compute the imaginary part of the phonon self energy due to electron-
@@ -26,22 +26,14 @@
   USE epwcom,    ONLY : nbndsub, lrepmatf, iunepmatf, fsthick, &
                         eptemp, ngaussw, degaussw, iuetf,     &
                         wmin, wmax, nw, nbndskip, a2f, epf_mem, etf_mem, &
-                        nsmear, delta_smear, eig_read, eps_acustic,  &
+                        nsmear, delta_smear, eig_read, eps_acustic, &
                         nqf1, nqf2, nqf3, nkf1, nkf2, nkf3 !! extra from schuberm 
   USE pwcom,     ONLY : nelec, ef, isk, nbnd
   USE el_phon,   ONLY : epf17, ibndmax, ibndmin, etf, &
                         etfq, wkf, xqf, wqf, nksf, nxqf,   &
                         nksqf, wf, nkstotf, xkf, xqf, dmef, &
                         lambda_all, lambda_v_all
-
-  !Modules added for tetrahedra-related subroutines
-  USE wvfct,              ONLY : nbnd, wg, et
-  USE lsda_mod,           ONLY : nspin, isk
-  USE klist,              ONLY : xk, wk, nks
-  use phcom
-  USE ktetra,             ONLY : k1, k2, k3
-  USE symme,              ONLY : s, t_rev, irt, ftau, nsym, invsym, d1,d2,d3, &
-                                 time_reversal
+  use tetrahedron
 #ifdef __PARA
   USE mp,        ONLY : mp_barrier,mp_sum
   USE mp_global, ONLY : me_pool,inter_pool_comm,my_pool_id
@@ -59,18 +51,16 @@
                    gamma(nmodes),gamma_v(nmodes), degaussw0, eptemp0, lambda_tot
   !
   real(kind=DP), external :: efermig
-  real(kind=DP), external :: efermit
   real(kind=DP) :: gamma_all  ( nmodes, nxqf, 10 )
   real(kind=DP) :: gamma_all_v  ( nmodes, nxqf, 10 )
   real(kind=DP) :: coskkq(nbndsub, nbndsub)
   real(kind=DP) :: DDOT,  vkk(3,nbndsub), vkq(3,nbndsub)
   !
-  !Variables added for tetrahedra-related subroutines
-  integer :: is
-  real(kind=DP):: wgf (nbnd, nksf),wgff (nbnd, nksf), eff, gamma_chk(nmodes)!,Fqnu(nksqf, nmodes, ibndmax-ibndmin+1)
-  integer :: ntetraf, itet, jtet
-  integer, allocatable :: tetraf(:,:)
-  real(kind=DP), ALLOCATABLE :: xkf_(:,:), wkf_(:)
+  !
+  integer :: ncorn, ntet, ierr, itet, jtet
+  type(tetra), allocatable :: tet(:)
+  real(kind=DP), allocatable :: wkt(:), eprim(:,:,:), Fqnu(:,:,:), ekj(:,:)
+  real(kind=DP) :: gamma_chk(nmodes) 
   !
   WRITE(6,'(/5x,a)') repeat('=',67)
   WRITE(6,'(5x,"Phonon (Imaginary) Self-Energy in the Migdal Approximation")') 
@@ -92,10 +82,7 @@
   !
   ! here we loop on smearing values JN - this may be an option later on 
   !
-  !
-  ALLOCATE (xkf_ (3, 2*nkstotf), wkf_(2*nkstotf))
-
-  !DO ismear = 1, nsmear
+  DO ismear = 1, nsmear
      !
      degaussw0 = (ismear-1) * delta_smear + degaussw
      eptemp0 = (ismear-1) * delta_smear + eptemp(1)
@@ -114,38 +101,8 @@
      !
      !   Note that the weights of k+q points must be set to zero here
      !   no spin-polarized calculation here
-    ef0 = efermig(etf,nbndsub,nksf,nelec,wkf,degaussw0,ngaussw,0,isk)
-    !Number of tetrahedra for fine mesh
-    ntetraf=6*nkf1*nkf2*nkf3
-    ALLOCATE ( tetraf  ( 4,  ntetraf))
-    
-    !defined kpoint_grid ( nrot, time_reversal, s, t_rev, bg, npk, &
-    !                       k1,k2,k3, nk1,nk2,nk3, nks, xk, wk)
-    call kpoint_grid ( nsym, time_reversal, s, t_rev, bg, nkf1*nkf2*nkf3, &
-                          0,0,0, nkf1,nkf2,nkf3, nksf, xkf, wkf)
-
-    !defined tetrahedra ( nsym, s, minus_q, at, bg, npk, k1,k2,k3, &
-    !   nk1,nk2,nk3, nks, xk, wk, ntetra, tetra )
-    call tetrahedra ( nsym, s, minus_q, at, bg, nkf1*nkf2*nkf3, 0,0,0, &
-       nkf1,nkf2,nkf3, nksf, xkf, wkf, ntetraf, tetraf )
-
-     !Calculate the Fermi energy ef
-    eff = efermit (etf, nbnd, nksf, nelec, nspin, ntetraf, tetraf, is, isk)
-
-    !defined tweights (nks, nspin, nbnd, nelec, ntetra, tetra, et, &
-    !   ef, wg, is, isk )
-    call tweights (nksf, nspin, nbndsub, nelec, ntetraf, tetraf, etf, &
-       eff, wgf, is, isk )
-
-    WRITE(6,'(/5x,"wgf = ",i5,"nksf = ",i5,"nksqf = ",i5, "ntetra =", i5)') size(wgf,1),nksf,nksqf, ntetraf
-    wgff=wgf
-    !ALLOCATE (Fqnu(nksqf, nmodes, ibndmax-ibndmin+1, ibndmax-ibndmin+1))
-    !DO ik = 1, nksqf
-     ! ikk = 2 * ik - 1
-      !DO ibnd = 1, nbndsub
-       !     WRITE(6,'(/5x,"ikk = ",i5," ibnd: ", i5, " wt: ", f14.10)') ikk, ibnd, wgf(ibnd,ikk)
-      !ENDDO
-    !ENDDO
+     ef0 = efermig(etf,nbndsub,nksf,nelec,wkf,degaussw0,ngaussw,0,isk)
+     !
      !   if 'fine' Fermi level differs by more than 250 meV, there is probably
      !   something wrong with the wannier functions
      IF (abs(ef0 - ef) * ryd2eV .gt. 0.5 .and. (.not.eig_read) ) &
@@ -157,19 +114,33 @@
      !
      WRITE (6, 100) degaussw0, ngaussw
      WRITE (6, 101) dosef, ef0 * ryd2ev
-     
-     !
      !
      ! loop over all q points of the fine mesh (this is in the k-para case 
      ! it should always be k-para for selfen_phon)
+     !
+         !!!! Tetrahedron method for sigmai
+    ncorn = 4 !! four corners of a tetrahedron
+    if(nksqf .ne. nkf1*nkf2*nkf3) then
+      write(*,*) "Error in q-mesh: nxqf!= nqf1*nqf2*nqf3"
+      call exit(1)
+    endif
+    ntet=nkf1*nkf2*nkf3*6
+    allocate(tet(ntet), stat=ierr)
+    allocate(wkt(nksqf), eprim(nmodes, nksqf, ibndmax-ibndmin+1), Fqnu(nksqf, nmodes, ibndmax-ibndmin+1))
+    allocate(ekj(nksqf,ibndmax-ibndmin+1 ))
+    if (ierr/=0) print*, "tet : Allocation failed"
+    CALL make_kp_reg(nkf1,nkf2,nkf3,wkt,ntet, tet)
+
      DO iq = 1, nxqf
+
         !
         CALL start_clock('PH SELF-ENERGY')
         !
         fermicount = 0
         gamma = zero
         gamma_v = zero
-        gamma_chk = zero
+        Fqnu=zero
+        gamma_chk=zero
         !
         DO ik = 1, nksqf
            !
@@ -232,6 +203,8 @@
                        !  the fermi occupation for k+q
                        ekq = etf (ibndmin-1+jbnd, ikq) - ef0
                        wgkq = wgauss( -ekq/eptemp0, -99)  
+
+                       eprim( imode, ik , jbnd ) = ekq
                        !
                        ! here we take into account the zero-point sqrt(hbar/2M\omega)
                        ! with hbar = 1 and M already contained in the eigenmodes
@@ -254,21 +227,16 @@
                        ! the below expression is positive-definite, but also an approximation
                        ! which neglects some fine features
                        !
-                       w0g1 = w0gauss ( ekk / degaussw0, 0) / degaussw0
-                       w0g2 = w0gauss ( ekq / degaussw0, 0) / degaussw0
-                       weight = pi * wq * wkf (ikk) * w0g1 * w0g2
+                       !w0g1 = w0gauss ( ekk / degaussw0, 0) / degaussw0
+                       !w0g2 = w0gauss ( ekq / degaussw0, 0) / degaussw0
+                       !weight = pi * wq * wkf (ikk) * w0g1 * w0g2
                        !
-                       !if (weight.gt. 1.0d-8) WRITE(6,'(/5x,"ikk = ",i5," ibnd: ", i5, " wt: ", f9.5)') ikk, ibnd, weight
                        !gamma(imode) =   gamma   (imode) + weight * g2 
                        !gamma_v(imode) = gamma_v (imode) + weight * g2 * (1-coskkq(ibnd, jbnd) ) 
-                       gamma(imode) =   gamma   (imode) + g2 *wgff(jbnd,ikk)*pi 
-                       gamma_v(imode) = gamma_v (imode) + weight * g2 * (1-coskkq(ibnd, jbnd) )
-                       !WRITE(6,'(/5x,"wgf = ", f14.10,"weight = ", f14.10)') wgff(ibnd,ikk),weight
                        !
-                       !Fqnu( ik, imode, ibnd, jbnd ) = g2 * ( wgkk -wgkq)
-                       !Fqnu( ik, imode, ibnd) = Fqnu( ik, imode, ibnd)+g2 *( wgkq - wgkk )
+                        Fqnu( ik, imode, ibnd) = Fqnu( ik, imode, ibnd)+g2 *( wgkq - wgkk )
+                        !Fqnu( ik, nmodes+imode, ibnd, jbnd ) = g2 * ( 1 + wgq - wgkq )
                     ENDDO ! jbnd
-                    !gamma(imode) =   gamma   (imode)* wgf(ibnd,ikk)
                  ENDDO   ! ibnd
                  !
               ENDDO ! loop on q-modes
@@ -278,18 +246,27 @@
            !
            CALL stop_clock('PH SELF-ENERGY')
            !
-        ENDDO ! loop on k 
-
-        !DO jbnd = 1, ibndmax-ibndmin+1
-          DO ibnd = 1, ibndmax-ibndmin+1
-            DO itet= 1, ntetraf
-               DO imode = 1, nmodes
-        !        ! Gamma(ikk, ibnd, imode) = Gamma(ikk, ibnd, imode) + Fqnu( iq, imode, ibnd, jbnd ) * tet_weight(imode) * 2 * pi
-                  !gamma_chk(imode) = gamma_chk(imode) + Fqnu( ik, imode, ibnd) *wgff(ibnd,itet)*pi 
-               ENDDO ! imode
-             ENDDO ! itet
-          ENDDO ! ibnd
-        !ENDDO ! jbnd       !
+        ENDDO ! loop on k
+        CALL eigen_tet(ntet,etf,tet,ibndmax-ibndmin+1,nksqf)
+        CALL weight_tet(nksqf, ntet,ibndmax-ibndmin+1,ef0,tet,wkt)
+        DO imode = 1, nmodes
+        ekj(:,:)=eprim(imode,:,:)
+        DO jbnd = 1, ibndmax-ibndmin+1
+            !DO ibnd = 1, ibndmax-ibndmin+1
+              !  the energy of the electron at k (relative to Ef)
+              !ekk = etf (ibndmin-1+ibnd, ikk) - ef0
+              DO itet= 1, ntet
+                DO jtet = 1, ncorn
+                  
+                    ! Gamma(ikk, ibnd, imode) = Gamma(ikk, ibnd, imode) + Fqnu( iq, imode, ibnd, jbnd ) * tet_weight(imode) * 2 * pi
+                    gamma_chk(imode) = gamma_chk(imode) + Fqnu( tet(itet)%p(jtet)%i, imode, jbnd) *tet(itet)%p(jtet)%c(jbnd) * pi
+                    !WRITE(6,'(/5x," wt: ", f14.10)') tet(itet)%p(jtet)%c(imode)
+                 
+                ENDDO ! jtet
+              ENDDO ! itet
+            !ENDDO ! ibnd
+        ENDDO ! jbnd
+        ENDDO ! imode
 #ifdef __PARA
         !
         ! collect contributions from all pools (sum over k-points)
@@ -318,7 +295,7 @@
            lambda_all( imode, iq, ismear ) = lambda
            lambda_v_all( imode, iq, ismear ) = lambda_v
            !
-           WRITE(6, 102) imode, lambda, ryd2mev * gamma(imode), ryd2mev * wq
+           WRITE(6, 102) imode, lambda, ryd2mev * gamma_chk(imode), ryd2mev * wq
   call flush(6)
         ENDDO
         !
@@ -335,9 +312,7 @@
         WRITE( stdout, '(/5x,a,i8,a,i8/)' ) &
              'Number of (k,k+q) pairs on the Fermi surface: ',fermicount, ' out of ', nkstotf/2
         !
-     ENDDO ! loop on q
-
-
+     ENDDO ! loop on q 
      DO iq = 1, nxqf
         !
         CALL start_clock('PH SELF-ENERGY')
@@ -494,7 +469,7 @@
         !
      ENDDO ! loop on q
      !
-  !ENDDO !smears
+  ENDDO !smears
   ! generate the Eliashberg spectral function
   !
   IF (a2f) call eliashberg_a2f( lambda_all(:,:,1), lambda_v_all(:,:,1))
@@ -504,10 +479,10 @@
 102 format(5x,'lambda( ',i3,' )=',f9.3,'   gamma=',f9.3,' meV','   omega=',f9.3,' meV')
 103 format(5x,'lambda( tot )=',f9.3)
   !
-  end subroutine selfen_phon_tet
+  end subroutine selfen_phon_tet_bo
   !
   !-----------------------------------------------------------------------
-  subroutine selfen_phon_fly_tet (iq )
+  subroutine selfen_phon_fly_tet_bo (iq )
   !-----------------------------------------------------------------------
   !
   !  compute the imaginary part of the phonon self energy due to electron-
@@ -775,6 +750,6 @@
 103 format(5x,'lambda( sum )=',f9.3)
   !
   return
-end subroutine selfen_phon_fly_tet
+end subroutine selfen_phon_fly_tet_bo
 !
 

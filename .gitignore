@@ -8,3 +8,8 @@ config.*
 make.sys
 configure.msg
 EPW/examples/
+.SyncIgnore
+EPW/src/.SyncArchive/
+EPW/src/.SyncID
+EPW/src/.SyncIgnore
+
