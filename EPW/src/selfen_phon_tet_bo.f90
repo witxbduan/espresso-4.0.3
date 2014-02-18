@@ -60,7 +60,7 @@
   integer :: ncorn, ntet, ierr, itet, jtet
   type(tetra), allocatable :: tet(:)
   real(kind=DP), allocatable :: wkt(:), eprim(:,:,:), Fqnu(:,:,:), ekj(:,:)
-  real(kind=DP) :: gamma_chk(nmodes) 
+  real(kind=DP) :: gamma_chk(nmodes), weight_chk(nksqf, nmodes, ibndmax-ibndmin+1)
   !
   WRITE(6,'(/5x,a)') repeat('=',67)
   WRITE(6,'(5x,"Phonon (Imaginary) Self-Energy in the Migdal Approximation")') 
@@ -126,7 +126,7 @@
     endif
     ntet=nkf1*nkf2*nkf3*6
     allocate(tet(ntet), stat=ierr)
-    allocate(wkt(nksqf), eprim(nmodes, nksqf, ibndmax-ibndmin+1), Fqnu(nksqf, nmodes, ibndmax-ibndmin+1))
+    allocate(wkt(nksqf), eprim(nmodes, nksqf, ibndmax-ibndmin+1), Fqnu(nksqf, nmodes,2*(ibndmax-ibndmin+1)))
     allocate(ekj(nksqf,ibndmax-ibndmin+1 ))
     if (ierr/=0) print*, "tet : Allocation failed"
     CALL make_kp_reg(nkf1,nkf2,nkf3,wkt,ntet, tet)
@@ -204,7 +204,7 @@
                        ekq = etf (ibndmin-1+jbnd, ikq) - ef0
                        wgkq = wgauss( -ekq/eptemp0, -99)  
 
-                       eprim( imode, ik , jbnd ) = ekq
+                       eprim( imode, ik , jbnd ) = ekq-wq
                        !
                        ! here we take into account the zero-point sqrt(hbar/2M\omega)
                        ! with hbar = 1 and M already contained in the eigenmodes
@@ -229,12 +229,12 @@
                        !
                        !w0g1 = w0gauss ( ekk / degaussw0, 0) / degaussw0
                        !w0g2 = w0gauss ( ekq / degaussw0, 0) / degaussw0
-                       !weight = pi * wq * wkf (ikk) * w0g1 * w0g2
+                        weight_chk( ik, imode, ibnd)=  pi * wq * wkf (ikk) * w0g1 * w0g2
                        !
                        !gamma(imode) =   gamma   (imode) + weight * g2 
                        !gamma_v(imode) = gamma_v (imode) + weight * g2 * (1-coskkq(ibnd, jbnd) ) 
                        !
-                        Fqnu( ik, imode, ibnd) = Fqnu( ik, imode, ibnd)+g2 *( wgkq - wgkk )
+                        Fqnu( ik, imode, ibnd+jbnd) = Fqnu( ik, imode, ibnd+jbnd)+g2 !*( wgkq - wgkk )
                         !Fqnu( ik, nmodes+imode, ibnd, jbnd ) = g2 * ( 1 + wgq - wgkq )
                     ENDDO ! jbnd
                  ENDDO   ! ibnd
@@ -247,25 +247,27 @@
            CALL stop_clock('PH SELF-ENERGY')
            !
         ENDDO ! loop on k
-        CALL eigen_tet(ntet,etf,tet,ibndmax-ibndmin+1,nksqf)
-        CALL weight_tet(nksqf, ntet,ibndmax-ibndmin+1,ef0,tet,wkt)
+        
         DO imode = 1, nmodes
         ekj(:,:)=eprim(imode,:,:)
-        DO jbnd = 1, ibndmax-ibndmin+1
-            !DO ibnd = 1, ibndmax-ibndmin+1
+        CALL eigen_tet(ntet,etf,tet,ibndmax-ibndmin+1,nksqf)
+        CALL weight_tet(nksqf, ntet,ibndmax-ibndmin+1,ef0,tet,wkt)
+        
               !  the energy of the electron at k (relative to Ef)
               !ekk = etf (ibndmin-1+ibnd, ikk) - ef0
               DO itet= 1, ntet
                 DO jtet = 1, ncorn
-                  
+                DO jbnd = 1, 2*(ibndmax-ibndmin+1)
+                  !DO ibnd = 1, ibndmax-ibndmin+1
                     ! Gamma(ikk, ibnd, imode) = Gamma(ikk, ibnd, imode) + Fqnu( iq, imode, ibnd, jbnd ) * tet_weight(imode) * 2 * pi
                     gamma_chk(imode) = gamma_chk(imode) + Fqnu( tet(itet)%p(jtet)%i, imode, jbnd) *tet(itet)%p(jtet)%c(jbnd) * pi
-                    !WRITE(6,'(/5x," wt: ", f14.10)') tet(itet)%p(jtet)%c(imode)
-                 
+                    !IF ( tet(itet)%p(jtet)%c(jbnd) .gt. 1.0d-8 .or.weight_chk(tet(itet)%p(jtet)%i, imode, jbnd) .gt. 1.0d-8) THEN
+                    !WRITE(6,'(/5x," itet: ", i5," jbnd: ", i5," wt: ", f14.10, " weight = ", f14.10)') itet, jbnd, tet(itet)%p(jtet)%c(jbnd), weight_chk(tet(itet)%p(jtet)%i, imode, jbnd)
+                    !!ENDIF
+                    ! ENDDO ! ibnd
+                  ENDDO ! jbnd
                 ENDDO ! jtet
               ENDDO ! itet
-            !ENDDO ! ibnd
-        ENDDO ! jbnd
         ENDDO ! imode
 #ifdef __PARA
         !

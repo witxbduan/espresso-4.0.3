@@ -67,14 +67,17 @@
   !
   !Variables added for tetrahedra-related subroutines
   integer :: is
-  real(kind=DP):: wgf (nbnd, nksf),wgff (nbnd, nksf), eff, gamma_chk(nmodes)!,Fqnu(nksqf, nmodes, ibndmax-ibndmin+1)
-  integer :: ntetraf, itet, jtet
+  real(kind=DP):: wgf (nbnd, nksf),wgff (nbnd, nksf), eff, gamma_chk(nmodes),Fqnu(nksqf, nmodes, ibndmax-ibndmin+1)
+  integer :: ntetraf, itet, jtet,kp1, kp2, kp3, kp4, itetra (4)
   integer, allocatable :: tetraf(:,:)
   real(kind=DP), ALLOCATABLE :: xkf_(:,:), wkf_(:)
+  integer, parameter :: out_unit=20
   !
   WRITE(6,'(/5x,a)') repeat('=',67)
   WRITE(6,'(5x,"Phonon (Imaginary) Self-Energy in the Migdal Approximation")') 
   WRITE(6,'(5x,a/)') repeat('=',67)
+
+  open (unit=out_unit,file="tet.txt",action="write",status="replace")
   !
   IF ( fsthick .lt. 1.d3 ) &
      WRITE(stdout, '(/5x,a,f10.6,a)' ) &
@@ -137,7 +140,7 @@
     call tweights (nksf, nspin, nbndsub, nelec, ntetraf, tetraf, etf, &
        eff, wgf, is, isk )
 
-    WRITE(6,'(/5x,"wgf = ",i5,"nksf = ",i5,"nksqf = ",i5, "ntetra =", i5)') size(wgf,1),nksf,nksqf, ntetraf
+    WRITE(6,'(/5x,"wgf = ",i5," nks = ",i5," nksf = ",i5," nksqf = ",i5, " ntetra =", i5)') size(wgf,2),nks,nksf,nksqf, ntetraf
     wgff=wgf
     !ALLOCATE (Fqnu(nksqf, nmodes, ibndmax-ibndmin+1, ibndmax-ibndmin+1))
     !DO ik = 1, nksqf
@@ -257,18 +260,20 @@
                        w0g1 = w0gauss ( ekk / degaussw0, 0) / degaussw0
                        w0g2 = w0gauss ( ekq / degaussw0, 0) / degaussw0
                        weight = pi * wq * wkf (ikk) * w0g1 * w0g2
+                       !weight = pi * wq*wkf (ikk) *abs((wgkk-wgkq)/(ekq-ekk-wq+degaussw0))
                        !
                        !if (weight.gt. 1.0d-8) WRITE(6,'(/5x,"ikk = ",i5," ibnd: ", i5, " wt: ", f9.5)') ikk, ibnd, weight
                        !gamma(imode) =   gamma   (imode) + weight * g2 
                        !gamma_v(imode) = gamma_v (imode) + weight * g2 * (1-coskkq(ibnd, jbnd) ) 
-                       gamma(imode) =   gamma   (imode) + g2 *wgff(jbnd,ikk)*pi 
+                       gamma(imode) =   gamma   (imode) + g2 * wgff(jbnd,ikk)/nks
                        gamma_v(imode) = gamma_v (imode) + weight * g2 * (1-coskkq(ibnd, jbnd) )
-                       !WRITE(6,'(/5x,"wgf = ", f14.10,"weight = ", f14.10)') wgff(ibnd,ikk),weight
+                       !WRITE(6,'(/5x,"wgf = ", f14.10," weight = ", f14.10)') wgff(jbnd,ikk)-wgff(ibnd,ikk),weight
                        !
                        !Fqnu( ik, imode, ibnd, jbnd ) = g2 * ( wgkk -wgkq)
-                       !Fqnu( ik, imode, ibnd) = Fqnu( ik, imode, ibnd)+g2 *( wgkq - wgkk )
+                       !Fqnu( ik, imode, ibnd) = Fqnu( ik, imode, ibnd)+g2 *wgff(jbnd,ik)*( wgkq - wgkk )
                     ENDDO ! jbnd
                     !gamma(imode) =   gamma   (imode)* wgf(ibnd,ikk)
+                    !gamma(imode) =   gamma   (imode) + g2 *wgff(ibnd,ik)*pi 
                  ENDDO   ! ibnd
                  !
               ENDDO ! loop on q-modes
@@ -281,14 +286,14 @@
         ENDDO ! loop on k 
 
         !DO jbnd = 1, ibndmax-ibndmin+1
-          DO ibnd = 1, ibndmax-ibndmin+1
-            DO itet= 1, ntetraf
-               DO imode = 1, nmodes
+        !  DO ibnd = 1, ibndmax-ibndmin+1
+        !    DO itet= 1, ntetraf
+         !      DO imode = 1, nmodes
         !        ! Gamma(ikk, ibnd, imode) = Gamma(ikk, ibnd, imode) + Fqnu( iq, imode, ibnd, jbnd ) * tet_weight(imode) * 2 * pi
-                  !gamma_chk(imode) = gamma_chk(imode) + Fqnu( ik, imode, ibnd) *wgff(ibnd,itet)*pi 
-               ENDDO ! imode
-             ENDDO ! itet
-          ENDDO ! ibnd
+                  !gamma_chk(imode) = gamma_chk(imode) + Fqnu( itet, imode, ibnd)*pi 
+         !      ENDDO ! imode
+         !    ENDDO ! itet
+         ! ENDDO ! ibnd
         !ENDDO ! jbnd       !
 #ifdef __PARA
         !
@@ -319,6 +324,7 @@
            lambda_v_all( imode, iq, ismear ) = lambda_v
            !
            WRITE(6, 102) imode, lambda, ryd2mev * gamma(imode), ryd2mev * wq
+          write (out_unit,*)  ryd2mev * wq, ryd2mev * gamma(imode)
   call flush(6)
         ENDDO
         !
@@ -336,8 +342,8 @@
              'Number of (k,k+q) pairs on the Fermi surface: ',fermicount, ' out of ', nkstotf/2
         !
      ENDDO ! loop on q
-
-
+     close (out_unit)
+     open (unit=out_unit,file="smear.txt",action="write",status="replace")
      DO iq = 1, nxqf
         !
         CALL start_clock('PH SELF-ENERGY')
@@ -476,6 +482,7 @@
            lambda_v_all( imode, iq, ismear ) = lambda_v
            !
            WRITE(6, 102) imode, lambda, ryd2mev * gamma(imode), ryd2mev * wq
+           write (out_unit,*)  ryd2mev * wq, ryd2mev * gamma(imode)
   call flush(6)
         ENDDO
         !
@@ -493,7 +500,8 @@
              'Number of (k,k+q) pairs on the Fermi surface: ',fermicount, ' out of ', nkstotf/2
         !
      ENDDO ! loop on q
-     !
+     close (out_unit)
+
   !ENDDO !smears
   ! generate the Eliashberg spectral function
   !

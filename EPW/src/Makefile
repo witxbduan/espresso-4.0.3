@@ -73,7 +73,7 @@ reset_sym.o \
 rotate_eigenm.o \
 rotate_epmat.o \
 rwepmatw.o \
-selfen_elec.o \
+selfen_elec_bo.o \
 selfen_phon.o \
 selfen_phon_tet.o \
 set_ndnmbr.o \

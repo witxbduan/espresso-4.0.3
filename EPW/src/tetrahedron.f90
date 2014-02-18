@@ -164,6 +164,7 @@ end subroutine eigen_tet_fermi
 subroutine weight_tet(nktot, ntet,nb,e,tet,wkt)
 !! input:  number of bands, the energy e that the weights are going to be computed, tet: tetrahedron
 !! the first 5 parameters are easy. Just need to get tet right.
+!! Lambin 1984
 use tetrahedron
 USE kinds, ONLY : DP
 implicit none

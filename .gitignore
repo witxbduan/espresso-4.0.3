@@ -1,3 +1,4 @@
+*!sync
 *.o
 config.*
 *.mod

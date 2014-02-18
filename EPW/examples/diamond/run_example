@@ -22,20 +22,20 @@ $ECHO "1) Calculate phonons"
 $ECHO "2) Run EPW"
 $ECHO "3) Both"
 
-read opts
+#read opts
 
-if [ $opts -eq 1 ]; then
- phons="1"
- epw="0"
-fi
-if [ $opts  -eq 2 ]; then
+#if [ $opts -eq 1 ]; then
+# phons="1"
+# epw="0"
+#fi
+#if [ $opts  -eq 2 ]; then
  phons="0"
  epw="1"
-fi
-if [ $opts  -eq 3 ]; then
- phons="1"
- epw="1"
-fi
+#fi
+#if [ $opts  -eq 3 ]; then
+# phons="1"
+# epw="1"
+#fi
 # function to test the exit status of a job
 #@jn. ../check_failure.sh
 
@@ -144,7 +144,7 @@ if [ "$phons" == "1" ]; then
     $PH_COMMAND  < ph.in   > ../ph.out
 #    check_failure $?
     $ECHO " Copying dvscf and dyn for q_${Q}"
-    cp diam.dvscf ../../../save/diam.dvscf_q${Q}
+    cp diam.dvscf1 ../../../save/diam.dvscf_q${Q}
     cp diam.dyn ../../../save/diam.dyn_q${Q}
     $ECHO " Cleaning up after calculation"
     cd ../
