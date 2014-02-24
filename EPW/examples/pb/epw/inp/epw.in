@@ -10,9 +10,10 @@
   epbread     = .true.
   epwwrite    = .false.
   epwread     = .true.
+  mp_mesh_k   = .false.
 
-  epf_mem     = .false.
-  etf_mem     = .false.
+  epf_mem     = .true.
+  etf_mem     = .true.
 
   nbndsub     =  4
   nbndskip    =  0
@@ -31,10 +32,10 @@
   tshuffle2   = .true.
   tphases     = .false.
 
-  elecselfen  = .false.
-  phonselfen  = .true.
-  fly         = .false.
-  a2f         = .true.
+  elecselfen  = .true.
+  phonselfen  = .false.
+  fly         = .true.
+  a2f         = .false.
 
   parallel_k  = .true.
   parallel_q  = .false.
@@ -52,14 +53,15 @@
   nq1         = 6
   nq2         = 6
   nq3         = 6
+  
+  nkf1        = 12
+  nkf2        = 12
+  nkf3        = 12
 
-  nqf1         = 6
-  nqf2         = 6
-  nqf3         = 6
-  nkf1         = 12
-  nkf2         = 12
-  nkf3         = 12
- /
+  nqf1        = 6
+  nqf2        = 6
+  nqf3        = 6
+/
       16 cartesian
     0.0000000   0.0000000   0.0000000   0.0909090
    -0.1666667   0.1666667  -0.1666667   0.0909090
