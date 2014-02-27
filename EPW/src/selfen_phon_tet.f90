@@ -22,26 +22,28 @@
   USE kinds,     ONLY : DP
   USE cell_base, ONLY : at, bg
   USE io_global, ONLY : stdout
-  USE phcom,     ONLY : nmodes
+  !USE phcom,     ONLY : nmodes
   USE epwcom,    ONLY : nbndsub, lrepmatf, iunepmatf, fsthick, &
                         eptemp, ngaussw, degaussw, iuetf,     &
                         wmin, wmax, nw, nbndskip, a2f, epf_mem, etf_mem, &
                         nsmear, delta_smear, eig_read, eps_acustic,  &
                         nqf1, nqf2, nqf3, nkf1, nkf2, nkf3 !! extra from schuberm 
-  USE pwcom,     ONLY : nelec, ef, isk, nbnd
+  USE pwcom,     ONLY : nelec, ef, isk, nbnd, wg, et, nspin, s, t_rev, irt, ftau, nsym, invsym, d1,d2,d3, &
+                                 time_reversal
+ 
   USE el_phon,   ONLY : epf17, ibndmax, ibndmin, etf, &
                         etfq, wkf, xqf, wqf, nksf, nxqf,   &
                         nksqf, wf, nkstotf, xkf, xqf, dmef, &
-                        lambda_all, lambda_v_all
+                        lambda_all, lambda_v_all, nrottet
 
   !Modules added for tetrahedra-related subroutines
-  USE wvfct,              ONLY : nbnd, wg, et
-  USE lsda_mod,           ONLY : nspin, isk
-  USE klist,              ONLY : xk, wk, nks
+  !USE wvfct,              ONLY : nbnd, wg, et
+  !USE lsda_mod,           ONLY : nspin, isk
+  !USE klist,              ONLY : xk, wk, nks
   use phcom
-  USE ktetra,             ONLY : k1, k2, k3
-  USE symme,              ONLY : s, t_rev, irt, ftau, nsym, invsym, d1,d2,d3, &
-                                 time_reversal
+  !USE ktetra,             ONLY : k1, k2, k3
+  !USE symme,              ONLY : s, t_rev, irt, ftau, nsym, invsym, d1,d2,d3, &
+  !                               time_reversal
 #ifdef __PARA
   USE mp,        ONLY : mp_barrier,mp_sum
   USE mp_global, ONLY : me_pool,inter_pool_comm,my_pool_id
@@ -67,10 +69,12 @@
   !
   !Variables added for tetrahedra-related subroutines
   integer :: is
+  real(kind=DP):: nks_
   real(kind=DP):: wgf (nbnd, nksf),wgff (nbnd, nksf), eff, gamma_chk(nmodes),Fqnu(nksqf, nmodes, ibndmax-ibndmin+1)
   integer :: ntetraf, itet, jtet,kp1, kp2, kp3, kp4, itetra (4)
   integer, allocatable :: tetraf(:,:)
-  real(kind=DP), ALLOCATABLE :: xkf_(:,:), wkf_(:)
+  real(kind=DP):: xkf_(3,nkf1*nkf2*nkf3), wkf_(nkf1*nkf2*nkf3)
+  !real(kind=DP), ALLOCATABLE :: xkf_(:,:), wkf_(:)
   integer, parameter :: out_unit=20
   !
   WRITE(6,'(/5x,a)') repeat('=',67)
@@ -96,7 +100,6 @@
   ! here we loop on smearing values JN - this may be an option later on 
   !
   !
-  ALLOCATE (xkf_ (3, 2*nkstotf), wkf_(2*nkstotf))
 
   !DO ismear = 1, nsmear
      !
@@ -121,26 +124,30 @@
     !Number of tetrahedra for fine mesh
     ntetraf=6*nkf1*nkf2*nkf3
     ALLOCATE ( tetraf  ( 4,  ntetraf))
+    !ALLOCATE ( xkf_  ( 3,  nkf1*nkf2*nkf3))
+    !ALLOCATE ( wkf_  ( nkf1*nkf2*nkf3))
     
     !defined kpoint_grid ( nrot, time_reversal, s, t_rev, bg, npk, &
     !                       k1,k2,k3, nk1,nk2,nk3, nks, xk, wk)
-    call kpoint_grid ( nsym, time_reversal, s, t_rev, bg, nkf1*nkf2*nkf3, &
-                          0,0,0, nkf1,nkf2,nkf3, nksf, xkf, wkf)
+    call kpoint_grid ( nrottet, time_reversal, s, t_rev, bg, nkf1*nkf2*nkf3, &
+                          0,0,0, nkf1,nkf2,nkf3, nksf, xkf_, wkf_)
 
     !defined tetrahedra ( nsym, s, minus_q, at, bg, npk, k1,k2,k3, &
     !   nk1,nk2,nk3, nks, xk, wk, ntetra, tetra )
-    call tetrahedra ( nsym, s, minus_q, at, bg, nkf1*nkf2*nkf3, 0,0,0, &
-       nkf1,nkf2,nkf3, nksf, xkf, wkf, ntetraf, tetraf )
+    call tetrahedra ( nrottet, s, minus_q, at, bg, nkf1*nkf2*nkf3, 0,0,0, &
+       nkf1,nkf2,nkf3, nksf, xkf_, wkf_, ntetraf, tetraf )
 
      !Calculate the Fermi energy ef
-    eff = efermit (etf, nbnd, nksf, nelec, nspin, ntetraf, tetraf, is, isk)
+     !defined efermit (et, nbnd, nks, nelec, nspin, ntetra, tetra, is, isk)
+    eff = efermit (etf, nbndsub, nksf, nelec, nspin, ntetraf, tetraf, 0, isk)
 
     !defined tweights (nks, nspin, nbnd, nelec, ntetra, tetra, et, &
     !   ef, wg, is, isk )
-    call tweights (nksf, nspin, nbndsub, nelec, ntetraf, tetraf, etf, &
-       eff, wgf, is, isk )
+    call tweights (nksf, nspin, nbnd, nelec, ntetraf, tetraf, etf, &
+       eff, wgf, 0, isk )
 
-    WRITE(6,'(/5x,"wgf = ",i5," nks = ",i5," nksf = ",i5," nksqf = ",i5, " ntetra =", i5)') size(wgf,2),nks,nksf,nksqf, ntetraf
+    WRITE(6,'(/5x,"wgf = ",i5," nks = ",i5," nksf = ",i5," nksqf = ",i5, " ntetra =", i5)') size(wgf,2),nks_,nksf,nksqf, ntetraf
+    WRITE(6,'(/5x,"eff = ",f14.10," ef0 = ",f14.10," ef = ",f14.10)') eff* ryd2eV, ef0* ryd2eV, ef* ryd2eV
     wgff=wgf
     !ALLOCATE (Fqnu(nksqf, nmodes, ibndmax-ibndmin+1, ibndmax-ibndmin+1))
     !DO ik = 1, nksqf
@@ -265,7 +272,7 @@
                        !if (weight.gt. 1.0d-8) WRITE(6,'(/5x,"ikk = ",i5," ibnd: ", i5, " wt: ", f9.5)') ikk, ibnd, weight
                        !gamma(imode) =   gamma   (imode) + weight * g2 
                        !gamma_v(imode) = gamma_v (imode) + weight * g2 * (1-coskkq(ibnd, jbnd) ) 
-                       gamma(imode) =   gamma   (imode) + g2 * wgff(jbnd,ikk)/nks
+                       gamma(imode) =   gamma   (imode) + g2 * wgff(jbnd,ikk)!*wkf(ikk)*pi
                        gamma_v(imode) = gamma_v (imode) + weight * g2 * (1-coskkq(ibnd, jbnd) )
                        !WRITE(6,'(/5x,"wgf = ", f14.10," weight = ", f14.10)') wgff(jbnd,ikk)-wgff(ibnd,ikk),weight
                        !

@@ -12,8 +12,8 @@
   epwread     = .true.
   mp_mesh_k   = .false.
 
-  epf_mem     = .true.
-  etf_mem     = .true.
+  epf_mem     = .false.
+  etf_mem     = .false.
 
   nbndsub     =  4
   nbndskip    =  0
@@ -44,6 +44,12 @@
   eptemp      = 0.045
   degaussw    = 0.045
 
+  rand_k      = .true.
+  rand_nk     = 13824
+
+  rand_q      = .true.
+  rand_nq     = 1728
+
   dvscf_dir   = '../../phonons/save'
   
   nk1         = 6
@@ -52,15 +58,7 @@
 
   nq1         = 6
   nq2         = 6
-  nq3         = 6
-  
-  nkf1        = 12
-  nkf2        = 12
-  nkf3        = 12
-
-  nqf1        = 6
-  nqf2        = 6
-  nqf3        = 6
+  nq3         = 6  
 /
       16 cartesian
     0.0000000   0.0000000   0.0000000   0.0909090

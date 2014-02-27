@@ -36,7 +36,7 @@ SUBROUTINE loadkmesh_para
   USE epwcom,    ONLY : filkf, nkf1, nkf2, nkf3, skf1, skf2, skf3, &
        rand_k, rand_nk, mp_mesh_k
   USE el_phon,   ONLY : nkstotf, nksf, xkf, wkf, &
-       nksqf
+       nksqf,nrottet
   USE pwcom,     ONLY : at, bg, ibrav, s, sname, symm_type
   USE symme,     ONLY : t_rev, time_reversal
   implicit none
@@ -107,6 +107,7 @@ SUBROUTINE loadkmesh_para
           ENDIF
           !                                         
           !
+          nrottet=nrot
           ALLOCATE ( xkf_ (3, 2*nkf1*nkf2*nkf3), wkf_(2*nkf1*nkf2*nkf3) )
           ! the result of this call is just nkstotf
           CALL kpoint_grid ( nrot, time_reversal, s, t_rev, bg, nkf1*nkf2*nkf3, &

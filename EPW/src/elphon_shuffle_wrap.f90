@@ -101,6 +101,7 @@
   IF (mpime.eq.ionode_id) &
 #endif
   READ(5,*) nqc_irr
+  WRITE(6,'(/5x,"nqc_irr = ",i5)') nqc_irr
 #ifdef __PARA
   CALL mp_bcast (nqc_irr, ionode_id, inter_pool_comm)
   CALL mp_bcast (nqc_irr, root_pool, intra_pool_comm)
@@ -529,9 +530,9 @@ goto 123
   ! the calculation of the self energy
   ! 
   !added by schuberm
-  IF (elecselfen  .and. .not.fly) CALL selfen_elec_bo
-  !IF (phonselfen  .and. .not.fly) CALL selfen_phon
-  IF (phonselfen  .and. .not.fly) CALL selfen_phon_tet
+  IF (elecselfen  .and. .not.fly) CALL selfen_elec
+  IF (phonselfen  .and. .not.fly) CALL selfen_phon
+  !IF (phonselfen  .and. .not.fly) CALL selfen_phon_tet
   IF (nest_fn     .and. .not.fly) CALL nesting_fn
   IF (band_plot   .and. .not.fly) CALL plot_band
   !

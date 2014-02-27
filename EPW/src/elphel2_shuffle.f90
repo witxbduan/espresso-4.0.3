@@ -318,7 +318,8 @@
        !  we have to USE the first q in the star in the dvqpsi_us3 call below (xq0)
        !  
        mode = imode0 + ipert
-       CALL dvqpsi_us3 (ik, mode, u (1, mode), nlcc_any, xktmp, xq0 ) 
+       !CALL dvqpsi_us3 (ik, mode, u (1, mode), nlcc_any, xktmp, xq0 )
+       CALL dvqpsi_us3 (ik, mode, u(:, mode), nlcc_any, xktmp, xq0 ) 
        !
        !  calculate dvscf_q*psi_k
        !

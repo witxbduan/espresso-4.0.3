@@ -363,6 +363,7 @@
        sigmai(nbndsub, nksf), zi(nbndsub, nksf), eptemp0
   logical :: already_skipped
   REAL(kind=DP), external :: efermig
+  integer, parameter :: out_unit=20
   !
   ! variables for collecting data from all pools in parallel case 
   !
@@ -373,18 +374,21 @@
   !
   ! loop over temperatures can be introduced
   !
+  !WRITE(6,'(5x,"made nrec_end3= ")')
+  !open (unit=out_unit,file="test.txt",action="write",status="replace")
   eptemp0 = eptemp(1)
+
   !
   IF (iq.eq.1) THEN
      !
-     WRITE(6,'(/5x,a)') repeat('=',67)
-     WRITE(6,'(5x,"Electron (Imaginary) Self-Energy in the Migdal Approximation (on the fly)")')
-     WRITE(6,'(5x,a/)') repeat('=',67)
+     !WRITE(stdout,'(/5x,a)') repeat('=',67)
+     !WRITE(6,'(5x,"Electron (Imaginary) Self-Energy in the Migdal Approximation (on the fly)")')
+     !WRITE(6,'(5x,a/)') repeat('=',67)
      !
      IF ( fsthick .lt. 1.d3 ) &
-        WRITE(stdout, '(/5x,a,f10.6,a)' ) 'Fermi Surface thickness = ', fsthick, ' Ry'
-     WRITE(stdout, '(/5x,a,e18.9,a)' ) &
-           'Golden Rule strictly enforced with T = ',eptemp0, ' Ry'
+        !WRITE(stdout, '(/5x,a,f10.6,a)' ) 'Fermi Surface thickness = ', fsthick, ' Ry'
+     !WRITE(stdout, '(/5x,a,e18.9,a)' ) &
+     !     'Golden Rule strictly enforced with T = ',eptemp0, ' Ry'
      !
      ! here we take into account that we may skip bands when we wannierize
      ! (spin-unpolarized)
@@ -394,8 +398,8 @@
         IF ( .not. already_skipped ) THEN
            nelec = nelec - two * nbndskip
            already_skipped = .true.
-           WRITE(stdout,'(/5x,"Skipping the first ",i4," bands:")') nbndskip
-           WRITE(stdout,'(/5x,"The Fermi level will be determined with ",f9.5," electrons")') nelec
+           !WRITE(stdout,'(/5x,"Skipping the first ",i4," bands:")') nbndskip
+           !WRITE(stdout,'(/5x,"The Fermi level will be determined with ",f9.5," electrons")') nelec
         ENDIF
      ENDIF
      !
@@ -415,10 +419,10 @@
   dosef = dosef / two
   !
   IF ( iq .eq. 1 ) THEN 
-     WRITE (6, 100) degaussw, ngaussw
-     WRITE (6, 101) dosef, ef0 * ryd2ev
-     WRITE (6, 101) dosef, ef  * ryd2ev
-     WRITE (6,'(a)') ' '
+     !WRITE (6, 100) degaussw, ngaussw
+     !WRITE (6, 101) dosef, ef0 * ryd2ev
+     !WRITE (6, 101) dosef, ef  * ryd2ev
+     !WRITE (6,'(a)') ' '
 100 FORMAT(5x,'Gaussian Broadening: ',f7.3,' Ry, ngauss=',i4)
 101 FORMAT(5x,'DOS =',f10.6,' states/spin/Ry/Unit Cell at Ef=',f10.6,' eV')
   ENDIF
@@ -446,9 +450,11 @@
         etf (ibndmin:ibndmax, ikk) = etfq (ibndmin:ibndmax, ikk, 1)
         etf (ibndmin:ibndmax, ikq) = etfq (ibndmin:ibndmax, ikq, 1)
      ELSE
-        nrec = (iq-1) * nksf + ikk
+        nrec = (1-1) * nksf + ikk
+        !WRITE(6,'(5x,"made nrec= ",i5, " ikk =", i5," ik =", i5)') nrec, ikk,ik
         CALL davcio ( etf (ibndmin:ibndmax, ikk), ibndmax-ibndmin+1, iuetf, nrec, - 1)
-        nrec = (iq-1) * nksf + ikq
+        nrec = (1-1) * nksf + ikq
+        !WRITE(6,'(5x,"made ikq= ",i5)') nrec
         CALL davcio ( etf (ibndmin:ibndmax, ikq), ibndmax-ibndmin+1, iuetf, nrec, - 1)
      ENDIF
      !
@@ -467,11 +473,14 @@
            !
            !  we read the e-p matrix
            !
+
            IF (etf_mem) THEN
               epf(:,:) = epf17 ( ik, 1, :, :, imode)
            ELSE
-              nrec = (iq-1) * nmodes * nksqf + (imode-1) * nksqf + ik
+              nrec = (1-1) * nmodes * nksqf + (imode-1) * nksqf + ik
+              !WRITE(6,'(5x,"made it= ",i5)') nrec
               CALL dasmio ( epf, ibndmax-ibndmin+1, lrepmatf, iunepmatf, nrec, -1)
+              !CALL dasmio ( epf, ibndmax-ibndmin+1, lrepmatf, 76, nrec, -1)
            ENDIF
            !
            DO ibnd = 1, ibndmax-ibndmin+1
@@ -622,6 +631,7 @@
      !
      WRITE(6,'(5x,"WARNING: only the eigenstates within the Fermi window are meaningful")')
      !
+     open (unit=out_unit,file="test.txt",action="write",status="replace")
      DO ik = 1, nksqtotf
         !
         IF (lgamma) THEN
@@ -647,6 +657,7 @@
 !                               ryd2mev * sigmai_all (ibnd,ikk),  zi_all (ibnd,ikk)
            WRITE(stdout, 103) ik, ryd2ev * ekk, ryd2mev * sigmar_all (ibnd,ikk), &
                               ryd2mev * sigmai_all (ibnd,ikk), zi_all (ibnd,ikk)
+           write (out_unit,*)  ryd2ev * ekk, ryd2mev * sigmai_all (ibnd,ikk)
         ENDDO
         WRITE(stdout,'(5x,a/)') repeat('-',67)
         !
@@ -656,6 +667,7 @@
      IF ( ALLOCATED(sigmai_all) ) DEALLOCATE( sigmai_all )
      IF ( ALLOCATED(zi_all) )     DEALLOCATE( zi_all )
      !
+     close (out_unit)
      102 FORMAT(5x,'E( ',i3,' )=',f9.3,' eV   Re[Sigma]=',f9.3,' meV   Im[Sigma]=',f9.3,' meV     Z=',f9.3)
      103 format(5x,'k( ',i6,' )=',f10.4,' eV   Re[Sigma]=',f10.4,' meV   Im[Sigma]=',f10.4,' meV     Z=',f9.3)
      !

@@ -313,8 +313,8 @@
        &'must parallelize over k OR q',1)
   IF (parallel_k .and. elecselfen) CALL errore('epw_readin', &
        &'Electron selfenergy is more efficient with k_para',-1)
-  IF (fly .and. elecselfen) CALL errore('epw_readin', &
-       &'Electron selfenergy requires fly =.false.',-1)
+  !IF (fly .and. elecselfen) CALL errore('epw_readin', &
+  !     &'Electron selfenergy requires fly =.false.',-1)
   IF (parallel_q .and. .not.epf_mem) CALL errore('epw_readin', &
        &'Must store ep-matrix in memory for parallel q',1)
   IF (a2f .and. .not.phonselfen) CALL errore('epw_readin', &
@@ -332,8 +332,8 @@
   IF ((nbndsub.gt.200)) CALL errore ('epw_readin', & 
        ' too many wannier functions increase size of projx', 1)
   IF (indabs .and. twophoton)  CALL errore ('epw_readin', 'twophoton and indabs not used together',1 )
-  IF ( elph .and. ( mp_mesh_k .or. mp_mesh_q )) CALL errore('epw_readin', &
-       &'can only work with full uniform mesh',1)
+  !IF ( elph .and. ( mp_mesh_k .or. mp_mesh_q )) CALL errore('epw_readin', &
+  !     &'can only work with full uniform mesh',1)
   IF (ephmatwrite .and. .not.fly ) CALL errore('epw_readin', &
       &'ephmatwrite requires fly=.true.',1)
   IF (fly .and. band_plot) CALL errore('epw_readin', &

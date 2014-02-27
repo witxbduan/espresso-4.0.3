@@ -1,3 +1,7 @@
+*example
+*genmod.f90
+*.swp
+examples/
 *!sync
 *.o
 config.*
@@ -9,6 +13,7 @@ config.*
 make.sys
 configure.msg
 EPW/examples/
+EPW/examples_gitrm/
 .SyncIgnore
 EPW/src/.SyncArchive/
 EPW/src/.SyncID

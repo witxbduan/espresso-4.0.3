@@ -66,7 +66,8 @@
        nrr_k,                  &!  number of wigner-seitz points for electrons
        nrr_q,                  &!  number of wigner-seitz points for phonons
        ibndmin,                &!  band bounds for slimming down electron-phonon matrix 
-       ibndmax                  !
+       ibndmax,                &!
+       nrottet                  ! added by schuberm
   INTEGER, ALLOCATABLE ::      & 
        irvec(:,:),             &!  crys coordinates of wigner-seitz vectors (both elec and phon)
        ndegen(:),              &!  corresponding degeneragy, electrons (old version)

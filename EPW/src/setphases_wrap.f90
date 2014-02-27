@@ -79,7 +79,8 @@
         !
         CALL ktokpmq ( xk(:,ik), zero_vect, +1, ipool, nkk, nkk_abs)
         !
-        CALL setphases ( 1, ik, npw, umat(:,:,ik),deltav)
+        !CALL setphases ( 1, ik, npw, umat(:,:,ik),deltav)
+        CALL setphases ( 1,ik, npw, umat(:,:,ik))
         umat_all(:,:,nkk_abs) = umat(:,:,ik)
         !
         !

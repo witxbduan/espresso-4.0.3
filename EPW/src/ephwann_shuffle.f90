@@ -322,10 +322,11 @@
      !
      !  open epf and etf files with the correct record length
      !
+
      lrepmatf  = 2 * (ibndmax-ibndmin+1) * (ibndmax-ibndmin+1)
      CALL diropn (iunepmatf, 'epf', lrepmatf, exst)
      !
-     lretf     = (ibndmax-ibndmin+1) 
+     lretf     = (ibndmax-ibndmin+1)
      CALL diropn (iuetf, 'etf', lretf, exst)
      !
   ENDIF
@@ -490,6 +491,8 @@
            CALL davcio ( etf (ibndmin:ibndmax, ikq), ibndmax-ibndmin+1, iuetf, nrec, + 1)
            !
         ENDIF
+        !WRITE(6,'(5x,"davcio")')
+        !WRITE(6,'(5x,"made ikq= ",i5)') ikq
         !
         ! interpolate ONLY when (k,k+q) both have at least one band 
         ! within a Fermi shell of size fsthick 
@@ -542,9 +545,11 @@
         !
      ENDDO  ! end loop over k points
      !
+     WRITE(6,'(5x,"made nrec_end= ",i5)') nrec
      IF (phonselfen  .and. fly) CALL selfen_phon_fly( iq )
      !added by schuberm
-     !IF (elecselfen  .and. fly) CALL selfen_elec_tet_fly( iq )
+     IF (elecselfen  .and. fly) CALL selfen_elec_fly( iq )
+     WRITE(6,'(5x,"made nrec_end2= ",i5)') nrec
      IF (nest_fn     .and. fly) CALL nesting_fn_fly( iq )
 !     IF (indabs      .and. fly) CALL indabs_fly (iq)
 !     IF (twophoton   .and. fly) CALL twophoton_fly (iq)

@@ -7,7 +7,7 @@ include make.libs
 # use recursive definitions in Makefile to modify the PATH for modules
 #
 
-DBGFLAGS   = -g -traceback
+DBGFLAGS   = -g -traceback -fp-stack-check
 IFLAGS   = -I../../include  
 MODFLAGS = -I./ -I../../Modules -I../../iotk/src \
            -I../../PW -I../../PH -I../../PP
@@ -73,7 +73,7 @@ reset_sym.o \
 rotate_eigenm.o \
 rotate_epmat.o \
 rwepmatw.o \
-selfen_elec_bo.o \
+selfen_elec.o \
 selfen_phon.o \
 selfen_phon_tet.o \
 set_ndnmbr.o \
